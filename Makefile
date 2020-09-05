@@ -52,11 +52,24 @@ kill:
 
 # ===== Demo scripts =====
 
+# Create directory where outputs will be saved
 .PHONY: demo-make-data-dir
+	@echo "Creating Data Directory"
 	@-mkdir $(DATA_BASE_DIR)
 
+.PHONY: demo-plotting
+demo-plotting: demo-make-data-dir
+	@echo "Demo: Plotting from within Docker"
+	@docker run --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		${IMAGE_NAME}:${VERSION} \
+		python3 -m scripts.plotting_demo \
+		--output_image /data/demo_plotting.png \
+		--xpassthrough $(XPASSTHROUGH)
+
 .PHONY: demo-unity-env
-demo-unity-env:
+demo-unity-env: demo-make-data-dir
+	@echo "Demo: Interfacing with Unity"
 	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} \
