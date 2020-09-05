@@ -19,6 +19,10 @@ DOCKER_CORE_VOLUMES = \
 	--volume="$(UNITY_DIR):/unity/:rw" \
 	--volume="$(DATA_BASE_DIR):/data/:rw" \
 	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw"
+DOCKER_DEVEL_VOLUMES = \
+	--volume="$(PWD)/requirements.txt:/requirements.txt:rw" \
+	--volume="$(PWD)/scripts:/scripts:rw" \
+	--volume="$(PWD)/src/unitybridge:/unitybridge:rw"
 
 
 .PHONY: help
@@ -30,6 +34,8 @@ help:
 	@echo '  build		build docker image (incremental)'
 	@echo '  rebuild	build docker image from scratch'
 	@echo '  kill		close all project-related docker containers'
+	@echo '  term		open a terminal in the docker container'
+	@echo '  devel		term, but with local code folders mounted'
 
 
 .PHONY: build
@@ -48,6 +54,26 @@ rebuild:
 kill:
 	@echo "Closing all running docker containers:"
 	@docker kill $(shell docker ps -q --filter ancestor=${IMAGE_NAME}:${VERSION})
+
+.PHONY: format
+format:
+	@echo "Formatting python code via yapf"
+	@docker run -it --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
+		${IMAGE_NAME}:${VERSION} yapf --recursive --in-place /unitybridge /scripts /src
+
+
+# ===== Development targets =====
+
+.PHONY: term devel
+term:
+	@docker run -it --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		${IMAGE_NAME}:${VERSION} /bin/bash
+devel:
+	@docker run -it --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
+		${IMAGE_NAME}:${VERSION} /bin/bash
 
 
 # ===== Demo scripts =====

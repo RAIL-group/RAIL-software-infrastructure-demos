@@ -6,6 +6,8 @@ opencv-python
 # Plotting
 matplotlib
 
-# Testing
+# Testing & Formatting
 pytest
 pytest-timeout
+yapf
+flake8
