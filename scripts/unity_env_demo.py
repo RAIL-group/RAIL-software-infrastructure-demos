@@ -6,18 +6,14 @@ from unitybridge import UnityBridge
 def depths_from_depth_image(depth_image, max_range=200.0):
     """Helper function to convert output from depth camera
     to a measurement of depth."""
-    return (
-        1.0*depth_image[:, :, 0]
-        + depth_image[:, :, 1]/256.0
-        + depth_image[:, :, 2]/256.0/256.0)/256.0*max_range
+    return (1.0 * depth_image[:, :, 0] + depth_image[:, :, 1] / 256.0 +
+            depth_image[:, :, 2] / 256.0 / 256.0) / 256.0 * max_range
 
 
 def main():
     # Get the command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--unity_exe_path',
-                        type=str,
-                        required=True)
+    parser.add_argument('--unity_exe_path', type=str, required=True)
     parser.add_argument('--output_image',
                         type=str,
                         required=False,
@@ -31,7 +27,8 @@ def main():
     # Open the unity environment and generate a few images
     with UnityBridge(args.unity_exe_path) as unity_bridge:
         pano_image = unity_bridge.get_image("agent/t_pano_camera")
-        pano_seg_image = unity_bridge.get_image("agent/t_pano_segmentation_camera")
+        pano_seg_image = unity_bridge.get_image(
+            "agent/t_pano_segmentation_camera")
         pano_depth_image = unity_bridge.get_image("agent/t_pano_depth_camera")
         pano_depth_image = depths_from_depth_image(pano_depth_image)
 
@@ -47,7 +44,8 @@ def main():
         # Now move and get more images
         unity_bridge.send_message("agent move 2.0 0.77 0.0 0")
         pano_image = unity_bridge.get_image("agent/t_pano_camera")
-        pano_seg_image = unity_bridge.get_image("agent/t_pano_segmentation_camera")
+        pano_seg_image = unity_bridge.get_image(
+            "agent/t_pano_segmentation_camera")
         pano_depth_image = unity_bridge.get_image("agent/t_pano_depth_camera")
         pano_depth_image = depths_from_depth_image(pano_depth_image)
 

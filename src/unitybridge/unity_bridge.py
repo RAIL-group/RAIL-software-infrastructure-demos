@@ -13,7 +13,6 @@ class TCPUnityParser(object):
     The various functions, titled 'parse_VAR', are all designed to easily
     listen for and parse the data of interest.
     """
-
     def __init__(self, unity_socket):
         self.unity_socket = unity_socket
         self.unity_socket.listen(4)
@@ -76,7 +75,7 @@ class TCPUnityParser(object):
         data['im_width'] = self.parse_struct('i')
 
         im_data = b''
-        im_data_target_len = data['im_height']*data['im_width']*3
+        im_data_target_len = data['im_height'] * data['im_width'] * 3
         while im_data_target_len - len(im_data) > 0:
             im_data += self.connection.recv(im_data_target_len - len(im_data))
         image = np.frombuffer(im_data, dtype=np.uint8)
@@ -86,8 +85,13 @@ class TCPUnityParser(object):
 
 
 class UnityBridge(object):
-    def __init__(self, unity_exe, unity_args='-batchmode -screen-fullscreen 0',
-                 tcp_ip='127.0.0.1', talk_port=None, listen_port=None, is_debug=False):
+    def __init__(self,
+                 unity_exe,
+                 unity_args='-batchmode -screen-fullscreen 0',
+                 tcp_ip='127.0.0.1',
+                 talk_port=None,
+                 listen_port=None,
+                 is_debug=False):
 
         self.tcp_ip = tcp_ip
         if talk_port:
@@ -104,8 +108,8 @@ class UnityBridge(object):
             s.bind(("", 0))
             self.listen_port = int(s.getsockname()[1])
 
-        print(("Ports: py-listen={} py-talk={}".format(
-            self.listen_port, self.talk_port)))
+        print(("Ports: py-listen={} py-talk={}".format(self.listen_port,
+                                                       self.talk_port)))
 
         self.unity_exe = unity_exe
         self.unity_args = unity_args + ' -talk-port {} -listen-port {}'.format(
@@ -122,7 +126,6 @@ class UnityBridge(object):
         start Unity, (3) listen to socket (via TCPUnityParser). In any other
         order Unity will not connect, or Python may hang.
         """
-
 
         # Launch unity as a background process
         if not self.is_debug:
@@ -164,20 +167,19 @@ class UnityBridge(object):
         self.talker.connect((self.tcp_ip, self.talk_port))
 
     def create_cube(self):
-        rx = random.random()*10
-        ry = random.random()*10
-        rz = random.random()*10
-        self.send_message("main_builder cube {} {} {}".format(
-            rx, ry, rz
-        ), pause=0.001)
+        rx = random.random() * 10
+        ry = random.random() * 10
+        rz = random.random() * 10
+        self.send_message("main_builder cube {} {} {}".format(rx, ry, rz),
+                          pause=0.001)
 
     def create_object(self, command_name, pose, height):
-        rx = random.random()*10
-        ry = random.random()*10
-        rz = random.random()*10
+        rx = random.random() * 10
+        ry = random.random() * 10
+        rz = random.random() * 10
         self.send_message("main_builder {} {} {} {}".format(
-            command_name, pose.y, height, pose.x
-        ), pause=0.001)
+            command_name, pose.y, height, pose.x),
+                          pause=0.001)
 
     def get_image(self, camera_name):
         self.send_message(camera_name + " render")

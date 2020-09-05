@@ -29,10 +29,8 @@ def main():
     elif args.output_image is not None:
         plt.savefig(args.output_image)
     else:
-        raise ValueError(
-            "Need either --output_image to be set "
-            "or --xpassthrough=='true'"
-        )
+        raise ValueError("Need either --output_image to be set "
+                         "or --xpassthrough=='true'")
 
 
 if __name__ == "__main__":
