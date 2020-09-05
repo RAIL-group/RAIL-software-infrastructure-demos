@@ -38,8 +38,12 @@ help:
 	@echo '  devel		term, but with local code folders mounted'
 
 
+unity:
+	@echo "Unzipping the Unity environment."
+	@unzip unity.zip
+
 .PHONY: build
-build:
+build: unity
 	@docker build -t ${IMAGE_NAME}:${VERSION} \
 		--build-arg NUM_BUILD_CORES=$(NUM_BUILD_CORES) \
 		$(DOCKER_ARGS) -f ./${DOCKERFILE} .
