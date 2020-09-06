@@ -1,0 +1,27 @@
+* Template Repo: Docker + make + Unity
+
+This repository is generally devoted to demonstrating how Docker and make can be used in tandem for robotics research.
+
+** Preliminaries
+
+First, docker must be installed by following [[https://docs.docker.com/engine/install/ubuntu/][the official docker install guide]]. Second, our docker environments will require that the NVIDIA docker runtime is installed (via =nvidia-container-toolkit=. Follow the install instructions on the [[https://github.com/NVIDIA/nvidia-docker#quickstart][nvidia-docker GitHub page]] to get it.
+
+Once these two things are installed, you should be able to confirm that you have GPU support via:
+
+#+begin_src bash
+docker run --gpus all nvidia/cuda:10.0-base nvidia-smi
+#+end_src
+
+Once Docker works as expected, running =make build= from the root directory of this repository will build the Docker container used to run the demos.
+
+** Overview of Functionality
+The highlights of the capabilities shown in this repository (and their associated make commands) are as follows:
+
+- =make build= A command for building the docker container used for running this repository and unzipping the Unity environment used for some of the demos
+- =make demo-plot= Show that python plotting can be used inside the container. If the following bash environment variable is set =XPASSTHROUGH=true=, an interactive plot will be shown: execute =export XPASSTHROUGH=true= in the terminal or run the command as =XPASSTHROUGH=true make demo-plot= to set this variable. If this argument is not set, a plot will be written to file instead and appear in the =./data= folder.
+- =make demo-unity-env= Shows that a Unity environment can be run inside the Docker container, to be interfaced with via the Python =unitybridge= package. An example Unity has been included in =unity.zip= and is unpacked as part of the build process.
+
+Other useful make targets:
+- =make term= Launches a bash terminal from inside the Docker container
+- =make devel= Like =make term=, but links local versions of the development code: i.e. if development code is modified inside the container, the code outside the container will also change.
+- =make format= Formats python code via =yapf=
