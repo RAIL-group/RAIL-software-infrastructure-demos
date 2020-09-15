@@ -67,11 +67,18 @@ format:
 		${IMAGE_NAME}:${VERSION} yapf --recursive --in-place /unitybridge /scripts /src
 
 
+.PHONY: xhost-activate
+xhost-activate:
+	@echo "Enabling local xhost sharing:"
+	@echo "  Display: $(DISPLAY)"
+	@DISPLAY=$(DISPLAY) xhost  +
+
+
 # ===== Development targets =====
 
 .PHONY: term devel
 term:
-	@docker run -it --init --gpus all --net=host \
+	@docker run -it --init --gpus all --net=host -e DISPLAY=$(DISPLAY) \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} /bin/bash
 devel:
@@ -100,7 +107,7 @@ demo-plotting: demo-make-data-dir
 .PHONY: demo-unity-env
 demo-unity-env: demo-make-data-dir
 	@echo "Demo: Interfacing with Unity"
-	@docker run --init --gpus all --net=host \
+	@docker run --init --gpus all --net=host -e DISPLAY=$(DISPLAY) \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.unity_env_demo \

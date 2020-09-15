@@ -2,7 +2,7 @@
 set -e
 
 # Needed to point the system towards pytorch CUDA
-export DISPLAY=:0
+# export DISPLAY=:0
 export LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib:$LD_LIBRARY_PATH
 
 # Main command
