@@ -115,3 +115,17 @@ demo-unity-env: xhost-activate demo-make-data-dir
 		--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
 		--output_image /data/demo_unity_env.png \
 		--xpassthrough $(XPASSTHROUGH)
+
+
+# ===== targets for batch operation =====
+
+.PHONY: batch-parallel-seeds batch-parallel
+batch-parallel-seeds = $(shell for ii in $$(seq 100 140); do echo "batch-parallel-$$ii"; done)
+demo-batch-parallel: $(batch-parallel-seeds)
+
+$(batch-parallel-seeds):
+	@docker run --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		${IMAGE_NAME}:${VERSION} \
+		python3 -m scripts.simple_wait \
+		--seed $(shell echo '$@' | grep -Eo '[0-9]+') \

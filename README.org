@@ -19,6 +19,7 @@ The highlights of the capabilities shown in this repository (and their associate
 
 - =make build= A command for building the docker container used for running this repository and unzipping the Unity environment used for some of the demos
 - =make demo-plot= Show that python plotting can be used inside the container. If the following bash environment variable is set =XPASSTHROUGH=true=, an interactive plot will be shown: execute =export XPASSTHROUGH=true= in the terminal or run the command as =XPASSTHROUGH=true make demo-plot= to set this variable. If this argument is not set, a plot will be written to file instead and appear in the =./data= folder.
+- =make demo-batch-parallel= A make target that aggregates other targets, each parameterized by their "random seed". In this case, the other targets can be run in parallel, something that is easy in make using the =-jN= syntax, where =N= is the number of parallel jobs. For example, running this with =make -j8 demo-batch-parallel= will run 8 parallel seeds if supported by the CPU.
 - =make demo-unity-env= Shows that a Unity environment can be run inside the Docker container, to be interfaced with via the Python =unitybridge= package. An example Unity has been included in =unity.zip= and is unpacked as part of the build process.
 
 Other useful make targets:
