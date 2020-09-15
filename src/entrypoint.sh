@@ -2,7 +2,6 @@
 set -e
 
 # Needed to point the system towards pytorch CUDA
-# export DISPLAY=:0
 export LD_LIBRARY_PATH=/usr/local/lib/python3.6/dist-packages/torch/lib:$LD_LIBRARY_PATH
 
 # Main command
@@ -12,5 +11,6 @@ then
     $@
 else
     echo "Using Docker virtual X server."
+    export VGL_DISPLAY=$DISPLAY
     xvfb-run -a --server-args='-screen 0 640x480x24 +extension GLX +render -noreset' vglrun $@
 fi
