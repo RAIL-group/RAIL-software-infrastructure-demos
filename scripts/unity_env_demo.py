@@ -1,6 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
 from unitybridge import UnityBridge
+import time
 
 
 def depths_from_depth_image(depth_image, max_range=200.0):
@@ -26,7 +27,9 @@ def main():
 
     # Open the unity environment and generate a few images
     with UnityBridge(args.unity_exe_path) as unity_bridge:
+        start_time = time.time()
         pano_image = unity_bridge.get_image("agent/t_pano_camera")
+        print(f"Time to get first image: {time.time() - start_time}")
         pano_seg_image = unity_bridge.get_image(
             "agent/t_pano_segmentation_camera")
         pano_depth_image = unity_bridge.get_image("agent/t_pano_depth_camera")
@@ -44,6 +47,9 @@ def main():
         # Now move and get more images
         unity_bridge.send_message("agent move 2.0 0.77 0.0 0")
         pano_image = unity_bridge.get_image("agent/t_pano_camera")
+        start_time = time.time()
+        pano_image = unity_bridge.get_image("agent/t_pano_camera")
+        print(f"Time to get second image: {time.time() - start_time}")
         pano_seg_image = unity_bridge.get_image(
             "agent/t_pano_segmentation_camera")
         pano_depth_image = unity_bridge.get_image("agent/t_pano_depth_camera")
