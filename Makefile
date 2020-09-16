@@ -31,13 +31,19 @@ DOCKER_DEVEL_VOLUMES = \
 help:
 	@echo ''
 	@echo 'Usage: make [TARGET] [EXTRA_ARGUMENTS]'
-	@echo 'Targets:'
+	@echo 'Core Targets:'
 	@echo '  help		display this help message'
 	@echo '  build		build docker image (incremental)'
 	@echo '  rebuild	build docker image from scratch'
 	@echo '  kill		close all project-related docker containers'
 	@echo '  term		open a terminal in the docker container'
 	@echo '  devel		term, but with local code folders mounted'
+	@echo 'Demo Targets:'
+	@echo '  all 		(or "all-demos") runs all demos'
+	@echo '  demo-batch-parallel (run with "-j6") shows off parallel job running with make'
+	@echo '  demo-plotting  plots via matplotlib inside the container'
+	@echo '  demo-pybind	runs C++ code in python via pybind'
+	@echo '  demo-unity-env runs Unity in headless mode, generates plot'
 
 
 unity:
@@ -100,7 +106,7 @@ test:
 # ===== Demo scripts =====
 
 .PHONY: all all-demos
-all all-demos: test demo-pybind demo-batch-parallel demo-unity-env
+all all-demos: test demo-pybind demo-batch-parallel demo-unity-env demo-plotting
 
 # Create directory where outputs will be saved
 .PHONY: demo-make-data-dir
