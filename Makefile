@@ -24,6 +24,7 @@ DOCKER_DEVEL_VOLUMES = \
 	--volume="$(PWD)/requirements.txt:/requirements.txt:rw" \
 	--volume="$(PWD)/scripts:/scripts:rw" \
 	--volume="$(PWD)/src/unitybridge:/unitybridge:rw"
+	--volume="$(PWD)/tests:/tests:rw"
 
 
 .PHONY: help
@@ -63,9 +64,9 @@ kill:
 .PHONY: format
 format:
 	@echo "Formatting python code via yapf"
-	@docker run -it --init --gpus all --net=host \
+	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
-		${IMAGE_NAME}:${VERSION} yapf --recursive --in-place /unitybridge /scripts /src
+		${IMAGE_NAME}:${VERSION} yapf --recursive --in-place /unitybridge /scripts /src /test
 
 
 .PHONY: xhost-activate
@@ -88,7 +89,7 @@ devel:
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} /bin/bash
 test:
-	@docker run -it --init --gpus all --net=host \
+	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} python3 -m py.test \
 			-rsx \
@@ -97,6 +98,9 @@ test:
 
 
 # ===== Demo scripts =====
+
+.PHONY: all all-demos
+all all-demos: test demo-pybind demo-batch-parallel demo-unity-env
 
 # Create directory where outputs will be saved
 .PHONY: demo-make-data-dir
