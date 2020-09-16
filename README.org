@@ -18,14 +18,17 @@ Once Docker works as expected, running =make build= from the root directory of t
 The highlights of the capabilities shown in this repository (and their associated make commands) are as follows:
 
 - =make build= A command for building the docker container used for running this repository and unzipping the Unity environment used for some of the demos
-- =make demo-plotting= Show that python plotting can be used inside the container. If the following bash environment variable is set =XPASSTHROUGH=true=, an interactive plot will be shown: execute =export XPASSTHROUGH=true= in the terminal or run the command as =XPASSTHROUGH=true make demo-plot= to set this variable. If this argument is not set, a plot will be written to file instead and appear in the =./data= folder.
-- =make demo-unity-env= Shows that a Unity environment can be run inside the Docker container, to be interfaced with via the Python =unitybridge= package. An example Unity has been included in =unity.zip= and is unpacked as part of the build process.
+- =make all= (can be run in parallel via =make -j8 all=) Runs tests and all demos.
 - =make demo-batch-parallel= A make target that aggregates other targets, each parameterized by their "random seed". In this case, the other targets can be run in parallel, something that is easy in make using the =-jN= syntax, where =N= is the number of parallel jobs. For example, running this with =make -j8 demo-batch-parallel= will run 8 parallel seeds if supported by the CPU.
+- =make demo-plotting= Show that python plotting can be used inside the container. If the following bash environment variable is set =XPASSTHROUGH=true=, an interactive plot will be shown: execute =export XPASSTHROUGH=true= in the terminal or run the command as =XPASSTHROUGH=true make demo-plot= to set this variable. If this argument is not set, a plot will be written to file instead and appear in the =./data= folder.
+- =make demo-pybind= Runs some example C++ code via PyBind11, which allows us to wrap C++ functions and classes with a Python API. This demo shows that passing an array to C++ and manipulating it via Eigen is faster than performing operations by looping over the array and competitive with Numpy.
+- =make demo-unity-env= Shows that a Unity environment can be run inside the Docker container, to be interfaced with via the Python =unitybridge= package. An example Unity has been included in =unity.zip= and is unpacked as part of the build process.
 
 
 Other useful make targets:
 - =make term= Launches a bash terminal from inside the Docker container
 - =make devel= Like =make term=, but links local versions of the development code: i.e. if development code is modified inside the container, the code outside the container will also change.
 - =make format= Formats python code via =yapf=
+- =make test= Runs python tests via =pytest=
 
 *Note*: this container defaults to using =DISPLAY=0:0= if the =DISPLAY= environment variable is not set. While running the Unity environment via =make demo-unity-env=, you may encounter the error =[VGL] ERROR: Could not open display :0=; running ~export DISPLAY=:1~ resolves this issue on most systems.
