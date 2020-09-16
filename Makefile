@@ -133,10 +133,7 @@ demo-pybind: demo-make-data-dir
 	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} \
-		python3 -m scripts.unity_env_demo \
-		--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
-		--output_image /data/demo_unity_env.png \
-		--xpassthrough $(XPASSTHROUGH)
+		python3 -m scripts.pybind_demo
 
 # ===== targets for batch operation =====
 
