@@ -16,6 +16,7 @@ DATA_BASE_DIR ?= "$(PWD)/data/"
 
 DOCKER_CORE_VOLUMES = \
 	--env XPASSTHROUGH=$(XPASSTHROUGH) \
+	--env DISPLAY=$(DISPLAY) \
 	--volume="$(UNITY_DIR):/unity/:rw" \
 	--volume="$(DATA_BASE_DIR):/data/:rw" \
 	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw"
@@ -77,15 +78,22 @@ xhost-activate:
 
 # ===== Development targets =====
 
-.PHONY: term devel
+.PHONY: term devel test
 term:
-	@docker run -it --init --gpus all --net=host -e DISPLAY=$(DISPLAY) \
+	@docker run -it --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} /bin/bash
 devel:
 	@docker run -it --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} /bin/bash
+test:
+	@docker run -it --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		${IMAGE_NAME}:${VERSION} python3 -m py.test \
+			-rsx \
+			--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
+			tests
 
 
 # ===== Demo scripts =====
@@ -108,7 +116,7 @@ demo-plotting: demo-make-data-dir
 .PHONY: demo-unity-env
 demo-unity-env: xhost-activate demo-make-data-dir
 	@echo "Demo: Interfacing with Unity"
-	@docker run --init --gpus all --net=host -e DISPLAY=$(DISPLAY) \
+	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.unity_env_demo \
@@ -116,6 +124,19 @@ demo-unity-env: xhost-activate demo-make-data-dir
 		--output_image /data/demo_unity_env.png \
 		--xpassthrough $(XPASSTHROUGH)
 
+
+# PyBind11 Examples
+
+.PHONY: demo-pybind
+demo-pybind: demo-make-data-dir
+	@echo "Demo: Running code via PyBind"
+	@docker run --init --gpus all --net=host \
+		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		${IMAGE_NAME}:${VERSION} \
+		python3 -m scripts.unity_env_demo \
+		--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
+		--output_image /data/demo_unity_env.png \
+		--xpassthrough $(XPASSTHROUGH)
 
 # ===== targets for batch operation =====
 

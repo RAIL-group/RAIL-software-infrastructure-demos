@@ -22,7 +22,10 @@ The highlights of the capabilities shown in this repository (and their associate
 - =make demo-unity-env= Shows that a Unity environment can be run inside the Docker container, to be interfaced with via the Python =unitybridge= package. An example Unity has been included in =unity.zip= and is unpacked as part of the build process.
 - =make demo-batch-parallel= A make target that aggregates other targets, each parameterized by their "random seed". In this case, the other targets can be run in parallel, something that is easy in make using the =-jN= syntax, where =N= is the number of parallel jobs. For example, running this with =make -j8 demo-batch-parallel= will run 8 parallel seeds if supported by the CPU.
 
+
 Other useful make targets:
 - =make term= Launches a bash terminal from inside the Docker container
 - =make devel= Like =make term=, but links local versions of the development code: i.e. if development code is modified inside the container, the code outside the container will also change.
 - =make format= Formats python code via =yapf=
+
+*Note*: this container defaults to using =DISPLAY=0:0= if the =DISPLAY= environment variable is not set. While running the Unity environment via =make demo-unity-env=, you may encounter the error =[VGL] ERROR: Could not open display :0=; running ~export DISPLAY=:1~ resolves this issue on most systems.

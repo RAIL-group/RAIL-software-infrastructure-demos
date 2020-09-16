@@ -35,6 +35,7 @@ RUN echo "backend: TkAgg" > matplotlibrc
 # Copy the remaining code
 COPY scripts scripts
 COPY src/unitybridge unitybridge
+COPY src/tests tests
 
 # Set up the starting point for running the code
 COPY src/entrypoint.sh /entrypoint.sh
