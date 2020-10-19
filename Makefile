@@ -114,7 +114,7 @@ all all-demos: test demo-pybind demo-batch-parallel demo-unity-env demo-plotting
 	@-mkdir $(DATA_BASE_DIR)
 
 .PHONY: demo-plotting
-demo-plotting: demo-make-data-dir
+demo-plotting: demo-make-data-dir xhost-activate
 	@echo "Demo: Plotting from within Docker"
 	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
@@ -124,7 +124,7 @@ demo-plotting: demo-make-data-dir
 		--xpassthrough $(XPASSTHROUGH)
 
 .PHONY: demo-unity-env
-demo-unity-env: xhost-activate demo-make-data-dir
+demo-unity-env: demo-make-data-dir xhost-activate
 	@echo "Demo: Interfacing with Unity"
 	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
