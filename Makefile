@@ -18,8 +18,8 @@ DOCKER_CORE_VOLUMES = \
 	--env XPASSTHROUGH=$(XPASSTHROUGH) \
 	--env DISPLAY=$(DISPLAY) \
 	--volume="$(UNITY_DIR):/unity/:rw" \
-	--volume="$(DATA_BASE_DIR):/data/:rw" \
-	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw"
+	--volume="$(DATA_BASE_DIR):/data/:rw"
+
 DOCKER_DEVEL_VOLUMES = \
 	--volume="$(PWD)/requirements.txt:/requirements.txt:rw" \
 	--volume="$(PWD)/scripts:/scripts:rw" \
@@ -94,7 +94,8 @@ devel:
 	@docker run -it --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} /bin/bash
-test:
+
+test: xhost-activate
 	@docker run --init --gpus all --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
 		${IMAGE_NAME}:${VERSION} python3 -m py.test \
@@ -107,6 +108,7 @@ test:
 
 .PHONY: all all-demos
 all all-demos: test demo-pybind demo-batch-parallel demo-unity-env demo-plotting
+	@echo "Completed all demos successfully."
 
 # Create directory where outputs will be saved
 .PHONY: demo-make-data-dir
