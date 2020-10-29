@@ -14,7 +14,7 @@ UNITY_DIR ?= "$(PWD)/unity/"
 UNITY_DBG_BASENAME ?= "ei_base_unity"
 DATA_BASE_DIR ?= "$(PWD)/data/"
 
-DOCKER_CORE_VOLUMES = \
+DOCKER_CORE_ARGS = \
 	--env XPASSTHROUGH=$(XPASSTHROUGH) \
 	--env DISPLAY=$(DISPLAY) \
 	--volume="$(UNITY_DIR):/unity/:rw" \
@@ -71,7 +71,7 @@ kill:
 format:
 	@echo "Formatting python code via yapf"
 	@docker run --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} yapf --recursive --in-place /unitybridge /scripts /src /test
 
 
@@ -88,16 +88,16 @@ xhost-activate:
 .PHONY: term devel test
 term:
 	@docker run -it --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} /bin/bash
 devel:
 	@docker run -it --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) $(DOCKER_DEVEL_VOLUMES)\
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} /bin/bash
 
 test: xhost-activate
 	@docker run --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} python3 -m py.test \
 			-rsx \
 			--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
@@ -119,7 +119,7 @@ all all-demos: test demo-pybind demo-batch-parallel demo-unity-env demo-plotting
 demo-plotting: demo-make-data-dir xhost-activate
 	@echo "Demo: Plotting from within Docker"
 	@docker run --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.plotting_demo \
 		--output_image /data/demo_plotting.png \
@@ -129,7 +129,7 @@ demo-plotting: demo-make-data-dir xhost-activate
 demo-unity-env: demo-make-data-dir xhost-activate
 	@echo "Demo: Interfacing with Unity"
 	@docker run --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.unity_env_demo \
 		--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
@@ -143,7 +143,7 @@ demo-unity-env: demo-make-data-dir xhost-activate
 demo-pybind: demo-make-data-dir
 	@echo "Demo: Running code via PyBind"
 	@docker run --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.pybind_demo
 
@@ -155,7 +155,7 @@ demo-batch-parallel: $(batch-parallel-seeds)
 
 $(batch-parallel-seeds):
 	@docker run --init --gpus all --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_VOLUMES) \
+		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.simple_wait \
 		--seed $(shell echo '$@' | grep -Eo '[0-9]+') \
