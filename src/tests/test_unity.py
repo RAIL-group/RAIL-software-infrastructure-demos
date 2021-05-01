@@ -7,7 +7,7 @@ def unity_exe_path(pytestconfig):
     return pytestconfig.getoption("unity_exe_path")
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 def test_unity_generates_images(unity_exe_path):
     """Run Unity and generate a couple of images."""
     if unity_exe_path is None:
