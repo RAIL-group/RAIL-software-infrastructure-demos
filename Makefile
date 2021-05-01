@@ -10,21 +10,27 @@ DOCKER_FILE_DIR = "."
 DOCKERFILE = ${DOCKER_FILE_DIR}/Dockerfile
 NUM_BUILD_CORES ?= 1
 IMAGE_NAME = ${APP_NAME}
-UNITY_DIR ?= "$(PWD)/unity/"
+UNITY_DIR ?= "$(shell pwd)/unity/"
 UNITY_DBG_BASENAME ?= "ei_base_unity"
-DATA_BASE_DIR ?= "$(PWD)/data/"
+DATA_BASE_DIR ?= "$(shell pwd)/data/"
+
+# Handle Optional GPU
+ifeq ($(USE_GPU),true)
+	DOCKER_GPU_ARG = --gpus all
+endif
 
 DOCKER_CORE_ARGS = \
 	--env XPASSTHROUGH=$(XPASSTHROUGH) \
 	--env DISPLAY=$(DISPLAY) \
 	--volume="$(UNITY_DIR):/unity/:rw" \
-	--volume="$(DATA_BASE_DIR):/data/:rw"
+	--volume="$(DATA_BASE_DIR):/data/:rw" \
+	$(DOCKER_GPU_ARG)
 
 DOCKER_DEVEL_VOLUMES = \
-	--volume="$(PWD)/requirements.txt:/requirements.txt:rw" \
-	--volume="$(PWD)/scripts:/scripts:rw" \
-	--volume="$(PWD)/src/unitybridge:/unitybridge:rw"
-	--volume="$(PWD)/tests:/tests:rw"
+	--volume="$(shell pwd)/requirements.txt:/requirements.txt:rw" \
+	--volume="$(shell pwd)/scripts:/scripts:rw" \
+	--volume="$(shell pwd)/src/unitybridge:/unitybridge:rw"
+	--volume="$(shell pwd)/tests:/tests:rw"
 
 
 .PHONY: help
@@ -70,7 +76,7 @@ kill:
 .PHONY: format
 format:
 	@echo "Formatting python code via yapf"
-	@docker run --init --gpus all --net=host \
+	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} yapf --recursive --in-place /unitybridge /scripts /src /test
 
@@ -87,16 +93,16 @@ xhost-activate:
 
 .PHONY: term devel test
 term:
-	@docker run -it --init --gpus all --net=host \
+	@docker run -it --init $(DOCKER_GPU) --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} /bin/bash
 devel:
-	@docker run -it --init --gpus all --net=host \
+	@docker run -it --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} /bin/bash
 
 test: xhost-activate
-	@docker run --init --gpus all --net=host \
+	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} python3 -m py.test \
 			-rsx \
@@ -112,13 +118,14 @@ all all-demos: test demo-pybind demo-batch-parallel demo-unity-env demo-plotting
 
 # Create directory where outputs will be saved
 .PHONY: demo-make-data-dir
+demo-make-data-dir:
 	@echo "Creating Data Directory"
 	@-mkdir $(DATA_BASE_DIR)
 
 .PHONY: demo-plotting
 demo-plotting: demo-make-data-dir xhost-activate
 	@echo "Demo: Plotting from within Docker"
-	@docker run --init --gpus all --net=host \
+	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.plotting_demo \
@@ -128,7 +135,7 @@ demo-plotting: demo-make-data-dir xhost-activate
 .PHONY: demo-unity-env
 demo-unity-env: demo-make-data-dir xhost-activate
 	@echo "Demo: Interfacing with Unity"
-	@docker run --init --gpus all --net=host \
+	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.unity_env_demo \
@@ -142,7 +149,7 @@ demo-unity-env: demo-make-data-dir xhost-activate
 .PHONY: demo-pybind
 demo-pybind: demo-make-data-dir
 	@echo "Demo: Running code via PyBind"
-	@docker run --init --gpus all --net=host \
+	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.pybind_demo
@@ -154,7 +161,7 @@ batch-parallel-seeds = $(shell for ii in $$(seq 100 140); do echo "batch-paralle
 demo-batch-parallel: $(batch-parallel-seeds)
 
 $(batch-parallel-seeds):
-	@docker run --init --gpus all --net=host \
+	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.simple_wait \
