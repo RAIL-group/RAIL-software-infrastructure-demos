@@ -165,4 +165,4 @@ $(batch-parallel-seeds):
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.simple_wait \
-		--seed $(shell echo '$@' | grep -Eo '[0-9]+') \
+		--seed $(shell echo '$@' | grep -Eo '[0-9]+')
