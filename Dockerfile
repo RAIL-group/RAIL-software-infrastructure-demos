@@ -1,13 +1,15 @@
-FROM nvidia/cudagl:10.2-base-ubuntu18.04
+FROM nvidia/cudagl:11.1-devel-ubuntu20.04
 
 ENV VIRTUALGL_VERSION 2.5.2
 ARG NUM_BUILD_CORES
 
 # Install all apt dependencies
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 RUN apt-get update && apt-get install -y software-properties-common
 # Add ppa for python3.6 install
 RUN apt-add-repository -y ppa:deadsnakes/ppa
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ="America/New_York" \
+	apt-get install -y --no-install-recommends \
 	curl ca-certificates cmake git python3.6 python3.6-dev \
 	xvfb libxv1 libxrender1 libxrender-dev g++ \
 	libboost-all-dev libcgal-dev ffmpeg python3-tk \
