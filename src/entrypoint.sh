@@ -9,8 +9,13 @@ if [ "$XPASSTHROUGH" = true ]
 then
     echo "Passing through local X server."
     $@
-else
-    echo "Using Docker virtual X server."
+elif nvidia-smi > /dev/null 2>&1 ; then
+    echo "Using Docker virtual X server (with GPU)."
     export VGL_DISPLAY=$DISPLAY
-    xvfb-run -a --server-args='-screen 0 640x480x24 +extension GLX +render -noreset' vglrun $@
+    xvfb-run -a --server-num=$((99 + $RANDOM % 1000)) \
+	     --server-args='-screen 0 640x480x24 +extension GLX +render -noreset' vglrun $@
+else
+    echo "Using Docker virtual X server (no GPU)."
+    xvfb-run -a --server-num=$((99 + $RANDOM % 1000)) \
+	     --server-args='-screen 0 640x480x24' $@
 fi
