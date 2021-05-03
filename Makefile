@@ -101,7 +101,7 @@ devel:
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) $(DOCKER_DEVEL_VOLUMES)\
 		${IMAGE_NAME}:${VERSION} /bin/bash
 
-test: xhost-activate
+test:
 	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} python3 -m py.test \
