@@ -1,4 +1,7 @@
+
 * Template Repo: Docker + make + Unity
+
+[![Container Unity CI](https://github.com/RAIL-group/docker_make_examples/actions/workflows/test_unity_container.yml/badge.svg)](https://github.com/RAIL-group/docker_make_examples/actions/workflows/test_unity_container.yml)
 
 This repository is generally devoted to demonstrating how Docker and make can be used in tandem for robotics research (and how a GPU can be supported).
 
