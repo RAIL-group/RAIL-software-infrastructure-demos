@@ -1,20 +1,17 @@
 
-* Template Repo: Docker + make + Unity
+* RAIL Group Software Infrastructure Demos
 
 [[https://github.com/RAIL-group/docker_make_examples/actions/workflows/test_unity_container.yml][https://github.com/RAIL-group/RAIL-software-infrastructure-demos/actions/workflows/test_unity_container.yml/badge.svg]]
 
 This repository is generally devoted to demonstrating how Docker and make can be used in tandem for robotics research (and how a GPU can be supported).
 
-# Each module located in the =modules= directory demonstrates this functionality
-
 This repository has a number of examples of use to Robotics and Computer Vision researchers that we make use of in the RAIL Group:
-# - Build and run code within a Docker container.
 - Run multiple processes in parallel (each in their own Docker container) with GNU Make.
-- Run test code inside the Docker container; optionally generate plots inside tests and from within the docker container.
 - Run C++ code from Python using PyBind11; this code is built inside the Docker container as part of the build process.
 - Run a Unity3D simulation environment with hardware (GPU) acceleration with Virtual GL.
+- Run test code inside the Docker container.
 
-** Getting started
+* Getting started
 First, docker must be installed by following [[https://docs.docker.com/engine/install/ubuntu/][the official docker install guide]]. Once Docker works as expected, running =make build= from the root directory of this repository will build the Docker container used to run the demos.
 
 ** Overview of Functionality
@@ -37,7 +34,7 @@ Other useful make targets:
 
 ** Using a GPU
 
-This repository is configured such that if a GPU is available in the container, it will be used. For the GPU to be accessible from within the container, our docker environments will require that the NVIDIA docker runtime is installed (via =nvidia-container-toolkit=. Follow the install instructions on the [[https://github.com/NVIDIA/nvidia-docker#quickstart][nvidia-docker GitHub page]] to get it.
+This repository is configured such that if a GPU is available in the container, it can be used. For the GPU to be accessible from within the container, our docker environments will require that the NVIDIA docker runtime is installed (via =nvidia-container-toolkit=. Follow the install instructions on the [[https://github.com/NVIDIA/nvidia-docker#quickstart][nvidia-docker GitHub page]] to get it.
 
 Once these two things are installed, you should be able to confirm that you have GPU support via:
 
@@ -45,19 +42,19 @@ Once these two things are installed, you should be able to confirm that you have
 docker run --gpus all nvidia/cuda:11.1-base nvidia-smi
 #+end_src
 
-Adding =USE_GPU=true= will enable GPU-based running inside the container.
+Adding =USE_GPU=true= to any target will enable GPU-based running inside the container:
 
 #+begin_src bash
 make build && make test USE_GPU=true
 #+end_src
 
-To confirm it is working as expected, you should notice a considerable speedup in the run time with and without the GPU.
+To confirm it is working as expected, you should notice a considerable speedup in the run time with and without the GPU for targets running the Unity simulation environment.
 
-* Running multiple processes in parallel with Docker+Make
+* Running multiple processes in parallel with GNU Make
 
 *Goal:* Show how to define GNU Make "targets" and execute them in parallel.
 
-We often generate data or run evaluations in parallel to save time. With Make, this is fairly easy, and with the right setup we can run multiple operations in parallel with only a small change at the command line.
+*Motivation:* We often generate data or run evaluations in parallel to save time. With Make, this is fairly easy, and with the right setup we can run multiple operations in parallel with only a small change at the command line.
 
 #+begin_quote
 If you are not yet familiar with the fundamentals of GNU Make, [[https://rail-group.notion.site/Using-GNU-Make-to-build-code-and-run-experiments-beb78c4f0afe4956813dd4cb7e387415][see our guide on using Make here]].
@@ -145,11 +142,12 @@ Seed: 111. Waiting...
 #+end_src
 
 The entire execution takes only 12.14 seconds, significantly faster than the original single-threaded execution, since none of the tasks block one another and can be run on separate threads.
-* Docker Fundamentals and Plotting
 
-**Goal:** Write a plot to file from within the Docker container; understand syntax of GNU make and how Make avoids re-generating existing files.
+* Docker fundamentals and writing plots to file
 
-We are constantly running code inside Docker and writing data or other byproducts to file. This example shows how to make that happen for a simple plotting script. Additionally, Make will save on computation when it realizes that some output already exists.
+*Goal:* Write a plot to file from within the Docker container; understand syntax of GNU make and how Make avoids re-generating existing files.
+
+*Motivation:* We are constantly running code inside Docker and writing data or other byproducts to file. This example shows how to make that happen for a simple plotting script. Additionally, Make will save on computation when it realizes that some output already exists.
 
 ** Plotting from within Docker
 
@@ -195,3 +193,22 @@ make demo-plotting-visualize DISPLAY=:1
 #+end_src
 
 
+
+
+* Running tests in Docker via PyTest
+
+*Goal:* Demonstrate how to run PyTest test code from within Docker.
+
+*Motivation:* Testing is an important part of any reliable workflow. Not only do manually run tests during development, but the test target is run as part of our Continuous Integration (CI) infrastructure as well. We use a [[https://github.com/RAIL-group/RAIL-software-infrastructure-demos/blob/main/.github/workflows/test_unity_container.yml][GitHub Action]] to automatically test our code before it's merged into =main=; this is also used to update the badge at the top of this repository.
+
+Running tests is fairly straightforward:
+#+begin_src makefiletest: build
+test: build
+	$(DOCKER_PYTHON) -m py.test \
+		-rsx \
+		--unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
+		tests
+#+end_src
+Running =make test= will build the repository and then run the tests.
+
+We have set up an argument to pass the Unity executable path to the tests, so that the unity environment can be run; see our =conftest.py= file [[https://github.com/RAIL-group/RAIL-software-infrastructure-demos/blob/main/src/tests/conftest.py][here]] for details. By default-the tests are run without the GPU, but setting ~USE_GPU=true~ will enable it: ~make test USE_GPU=true~.
