@@ -6,13 +6,13 @@ ARG NUM_BUILD_CORES
 # Install all apt dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 RUN apt-get update && apt-get install -y software-properties-common
-# Add ppa for python3.6 install
+# Add ppa for python3.8 install
 RUN apt-add-repository -y ppa:deadsnakes/ppa
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ="America/New_York" \
 	apt-get install -y --no-install-recommends \
-	curl ca-certificates cmake git python3.6 python3.6-dev \
+	curl ca-certificates cmake git python3.8 python3.8-dev \
 	xvfb g++ \
-	libboost-all-dev libcgal-dev ffmpeg python3-tk \
+	libboost-all-dev libcgal-dev ffmpeg python3.8-tk \
 	libeigen3-dev
 
 # Install VirtualGL

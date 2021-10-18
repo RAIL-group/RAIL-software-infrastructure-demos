@@ -1,11 +1,20 @@
 
 * Template Repo: Docker + make + Unity
 
-[[https://github.com/RAIL-group/docker_make_examples/actions/workflows/test_unity_container.yml][https://github.com/RAIL-group/docker_make_examples/actions/workflows/test_unity_container.yml/badge.svg]]
+[[https://github.com/RAIL-group/docker_make_examples/actions/workflows/test_unity_container.yml][https://github.com/RAIL-group/RAIL-software-infrastructure-demos/actions/workflows/test_unity_container.yml/badge.svg]]
 
 This repository is generally devoted to demonstrating how Docker and make can be used in tandem for robotics research (and how a GPU can be supported).
 
-** Preliminaries
+# Each module located in the =modules= directory demonstrates this functionality
+
+This repository has a number of examples of use to Robotics and Computer Vision researchers that we make use of in the RAIL Group:
+# - Build and run code within a Docker container.
+- Run multiple processes in parallel (each in their own Docker container) with GNU Make.
+- Run test code inside the Docker container; optionally generate plots inside tests and from within the docker container.
+- Run C++ code from Python using PyBind11; this code is built inside the Docker container as part of the build process.
+- Run a Unity3D simulation environment with hardware (GPU) acceleration with Virtual GL.
+
+** Getting started
 First, docker must be installed by following [[https://docs.docker.com/engine/install/ubuntu/][the official docker install guide]]. Once Docker works as expected, running =make build= from the root directory of this repository will build the Docker container used to run the demos.
 
 ** Overview of Functionality
@@ -43,3 +52,44 @@ make build && make test USE_GPU=true
 #+end_src
 
 To confirm it is working as expected, you should notice a considerable speedup in the run time with and without the GPU.
+
+* Docker Fundamentals and Plotting
+
+Docker and GNU Make are at the core of the workflow shown here. Each /make target/ is essentially a wrapper around python. The =$(DOCKER_PYTHON)= variable in Make is an alias for running python inside the container. We have provided a simple plotting script and call it from a Docker container, as specified in the following Make targets:
+
+#+begin_src makefile
+# This target is to make an image by calling a script
+demo-plotting-image-name = $(DATA_BASE_DIR)/demo_plotting.png
+$(demo-plotting-image-name):
+	@echo "Demo: Write a plot from within Docker"
+	@$(DOCKER_PYTHON) -m scripts.plotting_demo \
+		--output_image /data/demo_plotting.png
+
+# A high-level target that calls the plotting target with a more convenient name
+.PHONY: demo-plotting
+demo-plotting: $(demo-plotting-image-name)
+
+# Delete the file created by the plotting target
+demo-plotting-clean:
+	@echo "Cleaning products from the plotting demo."
+	@echo "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@rm -rf $(demo-plotting-image-name)
+#+end_src
+
+Running =make demo-plotting= will generate an image at =data/demo_plotting.png=. Data created inside a Docker container is not kept by default, so we "mount" the local =data= in this repository at =/data= inside the container. When the image is written to =/data/demo_plotting.png=, it persists in the local folder where it can be viewed even after the container terminates.
+
+GNU Make is clever at saving on computation. Running =make demo-plotting= a second time will do nothing (and Make will output =Nothing to be done for `demo-plotting'.= to reflect this). This is because the plot file already exists and its target (named after the file: =$(DATA_BASE_DIR)/demo_plotting.png=) is only run whenever that file does not exist. Delete the file by running =make demo-plotting-clean=. Afterwards, =make demo-plotting= will regenerate the file when run.
+
+We also provide another target that allows one to visualize the plot without writing it to file:
+#+begin_src makefile
+.PHONY: demo-plotting-visualize
+demo-plotting-visualize: XPASSTHROUGH=true
+demo-plotting-visualize:
+	@echo "Demo: Plotting from within Docker"
+	@$(DOCKER_PYTHON) -m scripts.plotting_demo \
+		--xpassthrough $(XPASSTHROUGH)
+#+end_src
+Note that this target is a bit more finicky, since it requires that the `DISPLAY` environment variable is properly set. If not, the target will fail, declaring that matplotlib is being run in `headless' mode. Setting the display variable manually to either ~DISPLAY=:0~ or ~DISPLAY=:1~ will work on most machines with a working X-server:
+#+begin_src bash
+make demo-plotting-visualize DISPLAY=:1
+#+end_src
