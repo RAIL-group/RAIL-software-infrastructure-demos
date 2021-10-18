@@ -53,9 +53,107 @@ make build && make test USE_GPU=true
 
 To confirm it is working as expected, you should notice a considerable speedup in the run time with and without the GPU.
 
+* Running multiple processes in parallel with Docker+Make
+
+*Goal:* Show how to define GNU Make "targets" and execute them in parallel.
+
+We often generate data or run evaluations in parallel to save time. With Make, this is fairly easy, and with the right setup we can run multiple operations in parallel with only a small change at the command line.
+
+#+begin_quote
+If you are not yet familiar with the fundamentals of GNU Make, [[https://rail-group.notion.site/Using-GNU-Make-to-build-code-and-run-experiments-beb78c4f0afe4956813dd4cb7e387415][see our guide on using Make here]].
+#+end_quote
+
+Make supports arbitrary operations on strings, enabled by the `$(shell ...)` syntax. This special Make command allows you to run arbitrary bash commands to generate or process strings, very useful if you would like to (for example) spawn a number of processes that have a specified (non-random) seed, and wait an amount of time between 1 and 3 seconds. We can do that with Make:
+
+#+begin_src makefile
+.PHONY: demo-batch-parallel-seeds demo-batch-parallel-all an-example-dependency
+
+an-example-dependency:
+	@echo "Running dependency."
+
+demo-batch-parallel-seeds = $(shell for ii in $$(seq 100 120); do echo "demo-batch-parallel-$$ii"; done)
+$(demo-batch-parallel-seeds): an-example-dependency
+	@echo "Seed: $(shell echo '$@' | grep -Eo '[0-9]+'). Waiting..."
+	@sleep $(shell echo '$@' | grep -Eo '[0-9]+' | awk '{print $$0%3 + 1}')
+	@echo "...Done"
+
+demo-batch-parallel-all: $(demo-batch-parallel-seeds)
+#+end_src
+
+So let's break this down: first we start off with =.PHONY= to protect ourselves, since we're not creating any files. Next we create an example target =an-example-dependency= that will serve as... an example dependency.
+
+Next, we have a more complex series of commands that define each of our individual =demo-batch-parallel-seeds= targets: we first define =demo-batch-parallel-seeds= as a list made up of =demo-batch-parallel-100 demo-batch-parallel-101 demo-batch-parallel-102= etc. For each element of the list we wish to define our make target (every item in the list is "pasted" on the left hand side of the =:=) and then it waits for a specified amount of time. Notice that using the built-in =$(shell ...)=, we can do some string processing to get the number at the end of the =demo-batch-parallel-##= command and use it later on to control how long the =sleep= command runs.
+
+Finally, the =demo-batch-parallel-all= target takes *all* of the =$(demo-batch-parallel-seeds)= as dependencies, which means that running `make demo-batch-parallel-all` will run every one of those other targets.
+
+So let's see what happens. Starting small, we can see (as we might expect) that running =make an-example-dependency= prints =Running dependency.= to the terminal. Something else interesting is that you can run a single seed /individually/. Calling, for example, =make demo-batch-parallel-103= outputs the following (and takes roughly 2 seconds to run):
+
+#+begin_src text
+Running dependency.
+Seed: 103. Waiting...
+...Done
+#+end_src
+Notice that it first runs the dependency and then runs the target of interest. Now let's see what happens when we run =make demo-batch-parallel-all=. The output begins with the following:
+#+begin_src text
+Running dependency.
+Seed: 100. Waiting...
+...Done
+Seed: 101. Waiting...
+...Done
+Seed: 102. Waiting...
+...Done
+Seed: 103. Waiting...
+...Done
+Seed: 104. Waiting...
+...Done
+Seed: 105. Waiting...
+...Done
+Seed: 106. Waiting...
+...Done
+Seed: 107. Waiting...
+...Done
+Seed: 108. Waiting...
+...Done
+#+end_src
+...and continues for all 20 seeds, taking a total of just over 42.5 seconds. Notice also that the dependency was only run a single time! This is what we would hope for: the dependency should only be needed a single time and Make is clever enough to have realized that, saving computation as compared to running each target individually.
+
+Make supports parallel execution by default and makes it super easy: by adding the =-j= flag, followed by a number (e.g., =-j4=), you can run that many threads in parallel, limited only by the number of threads your processor can support. Running instead =make -j4 demo-batch-parallel-all= produces the following (truncated) output:
+
+#+begin_src text
+Running dependency.
+Seed: 100. Waiting...
+Seed: 101. Waiting...
+Seed: 102. Waiting...
+Seed: 103. Waiting...
+...Done
+Seed: 104. Waiting...
+...Done
+Seed: 105. Waiting...
+...Done
+Seed: 106. Waiting...
+...Done
+Seed: 107. Waiting...
+...Done
+Seed: 108. Waiting...
+...Done
+...Done
+Seed: 109. Waiting...
+...Done
+Seed: 110. Waiting...
+Seed: 111. Waiting...
+...Done
+#+end_src
+
+The entire execution takes only 12.14 seconds, significantly faster than the original single-threaded execution, since none of the tasks block one another and can be run on separate threads.
 * Docker Fundamentals and Plotting
 
-Docker and GNU Make are at the core of the workflow shown here. Each /make target/ is essentially a wrapper around python. The =$(DOCKER_PYTHON)= variable in Make is an alias for running python inside the container. We have provided a simple plotting script and call it from a Docker container, as specified in the following Make targets:
+**Goal:** Write a plot to file from within the Docker container; understand syntax of GNU make and how Make avoids re-generating existing files.
+
+We are constantly running code inside Docker and writing data or other byproducts to file. This example shows how to make that happen for a simple plotting script. Additionally, Make will save on computation when it realizes that some output already exists.
+
+** Plotting from within Docker
+
+Make sure you have already built the repository via =make build=. Docker and GNU Make are at the core of our workflow. Each /make target/ is essentially a wrapper around python. The =$(DOCKER_PYTHON)= variable in Make is an alias for running python inside the container. We have provided a simple plotting script and call it from a Docker container, as specified in the following Make targets:
 
 #+begin_src makefile
 # This target is to make an image by calling a script
@@ -80,6 +178,8 @@ Running =make demo-plotting= will generate an image at =data/demo_plotting.png=.
 
 GNU Make is clever at saving on computation. Running =make demo-plotting= a second time will do nothing (and Make will output =Nothing to be done for `demo-plotting'.= to reflect this). This is because the plot file already exists and its target (named after the file: =$(DATA_BASE_DIR)/demo_plotting.png=) is only run whenever that file does not exist. Delete the file by running =make demo-plotting-clean=. Afterwards, =make demo-plotting= will regenerate the file when run.
 
+** Visualizing a plot from within Docker
+
 We also provide another target that allows one to visualize the plot without writing it to file:
 #+begin_src makefile
 .PHONY: demo-plotting-visualize
@@ -93,3 +193,5 @@ Note that this target is a bit more finicky, since it requires that the `DISPLAY
 #+begin_src bash
 make demo-plotting-visualize DISPLAY=:1
 #+end_src
+
+
