@@ -110,10 +110,20 @@ test: build
 
 # ===== Demo scripts =====
 
-.PHONY: all-demos
-all-demos: demo-pybind demo-batch-parallel demo-unity-env demo-plotting
-	@echo "Completed all demos successfully."
+# === Parallel Execution ===
 
+.PHONY: demo-batch-parallel-seeds demo-batch-parallel-all an-example-dependency
+
+an-example-dependency:
+	@echo "Running dependency."
+
+demo-batch-parallel-seeds = $(shell for ii in $$(seq 100 120); do echo "demo-batch-parallel-$$ii"; done)
+$(demo-batch-parallel-seeds): an-example-dependency
+	@echo "Seed: $(shell echo '$@' | grep -Eo '[0-9]+'). Waiting..."
+	@sleep $(shell echo '$@' | grep -Eo '[0-9]+' | awk '{print $$0%3 + 1}')
+	@echo "...Done"
+
+demo-batch-parallel-all: $(demo-batch-parallel-seeds)
 
 # === Plotting ===
 demo-plotting-image-name = $(DATA_BASE_DIR)/demo_plotting.png
@@ -159,15 +169,6 @@ demo-pybind:
 		${IMAGE_NAME}:${VERSION} \
 		python3 -m scripts.pybind_demo
 
-# ===== targets for batch operation =====
-
-.PHONY: batch-parallel-seeds batch-parallel
-batch-parallel-seeds = $(shell for ii in $$(seq 100 140); do echo "batch-parallel-$$ii"; done)
-demo-batch-parallel: $(batch-parallel-seeds)
-
-$(batch-parallel-seeds):
-	@docker run --init --net=host \
-		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
-		${IMAGE_NAME}:${VERSION} \
-		python3 -m scripts.simple_wait \
-		--seed $(shell echo '$@' | grep -Eo '[0-9]+')
+.PHONY: all-demos
+all-demos: demo-pybind demo-batch-parallel demo-unity-env demo-plotting
+	@echo "Completed all demos successfully."
