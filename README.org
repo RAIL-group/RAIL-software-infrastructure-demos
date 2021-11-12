@@ -6,10 +6,10 @@
 This repository is generally devoted to demonstrating how Docker and make can be used in tandem for robotics research (and how a GPU can be supported).
 
 This repository has a number of examples of use to Robotics and Computer Vision researchers that we make use of in the RAIL Group:
-- Run multiple processes in parallel (each in their own Docker container) with GNU Make.
-- Run C++ code from Python using PyBind11; this code is built inside the Docker container as part of the build process.
-- Run a Unity3D simulation environment with hardware (GPU) acceleration with Virtual GL.
-- Run test code inside the Docker container.
+- Run multiple processes in parallel with GNU Make. ([[#running-multiple-processes-in-parallel-with-gnu-make][link]])
+- Run C++ code from Python using PyBind11; this code is built inside the Docker container as part of the build process. [Work in Progress]
+- Run a Unity3D simulation environment with hardware (GPU) acceleration with Virtual GL. ([[#running-the-unity3d-environment-within-docker][link]])
+- Run test code inside the Docker container. ([[#running-tests-in-docker-via-pytest][link]])
 
 * Getting started
 First, docker must be installed by following [[https://docs.docker.com/engine/install/ubuntu/][the official docker install guide]]. Once Docker works as expected, running =make build= from the root directory of this repository will build the Docker container used to run the demos.
