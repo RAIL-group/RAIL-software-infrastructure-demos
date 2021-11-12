@@ -192,9 +192,6 @@ Note that this target is a bit more finicky, since it requires that the `DISPLAY
 make demo-plotting-visualize DISPLAY=:1
 #+end_src
 
-
-
-
 * Running tests in Docker via PyTest
 
 *Goal:* Demonstrate how to run PyTest test code from within Docker.
@@ -212,3 +209,61 @@ test: build
 Running =make test= will build the repository and then run the tests.
 
 We have set up an argument to pass the Unity executable path to the tests, so that the unity environment can be run; see our =conftest.py= file [[https://github.com/RAIL-group/RAIL-software-infrastructure-demos/blob/main/src/tests/conftest.py][here]] for details. By default-the tests are run without the GPU, but setting ~USE_GPU=true~ will enable it: ~make test USE_GPU=true~.
+
+* Running the Unity3D environment within Docker
+
+We have provided a script and accompanying make target that runs the Unity simulation environment:
+
+#+begin_src makefile
+  # A target that runs the Unity3D enviornment and generates an image
+  .PHONY: demo-unity-env
+  demo-unity-env:
+	  @echo "Demo: Interfacing with Unity"
+	  @$(call xhost-activate)
+	  @docker run --init --net=host \
+		  $(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
+		  ${IMAGE_NAME}:${VERSION} \
+		  python3 -m scripts.unity_env_demo \
+		  --unity_exe_path /unity/$(UNITY_DBG_BASENAME).x86_64 \
+		  --output_image /data/demo_unity_env.png \
+		  --xpassthrough $(XPASSTHROUGH)
+#+end_src
+Now you can run this code using one of these configurations:
+#+begin_src bash
+  # With the CPU
+  make build && make demo-unity-env
+  # With a GPU
+  make build && make demo-unity-env USE_GPU=true
+  # With a GPU (some machines use DISPLAY=:1 and will fail without this)
+  make build && make demo-unity-env USE_GPU=true DISPLAY=:1
+#+end_src
+
+Running one of these should write an image =demo_unity_env.png= into the =data= folder. With =USE_GPU=true=, the Unity3D environment runs with hardware acceleration (as long as Nvidia Docker is configured and runs with your local GPU), allowing us to generate the image relatively quickly. *Note:* There may be a number of warnings beginning with =ALSA= upon running this command. These are complaints that a sound card does not exist and can be ignored for our purposes.
+
+** How does hardware acceleration (GPU) work?
+
+The Unity3D environment is running inside a Docker container with hardware support. There are a few pieces required to make this setup work correctly. The first is the container itself, which must have the ability to support OpenGL. For this, our Dockerfile starts with the =cudagl= container provided by Nvidia:
+#+begin_src dockerfile
+FROM nvidia/cudagl:11.1-devel-ubuntu20.04
+#+end_src
+This container has OpenGL already installed and provides the resources we need to access hardware acceleration that Unity3D relies upon to run at target speeds. Next, we need to build =VirtualGL= inside the container; VirtualGL was created to allow for "server-side 3D rendering" where a computer may not have a screen attached and may or may not be running an X window server. VirtualGL allows to use local hardware (a GPU) to run applications on this "remote machine" (or inside a container). To build VirtualGL, we use the following command in the Dockerfile:
+#+begin_src dockerfile
+  # Install VirtualGL
+  ENV VIRTUALGL_VERSION 2.5.2
+  RUN curl -sSL https://downloads.sourceforge.net/project/virtualgl/"${VIRTUALGL_VERSION}"/virtualgl_"${VIRTUALGL_VERSION}"_amd64.deb -o virtualgl_"${VIRTUALGL_VERSION}"_amd64.deb && \
+	    dpkg -i virtualgl_*_amd64.deb && \
+	    /opt/VirtualGL/bin/vglserver_config -config +s +f -t && \
+#+end_src
+Finally, we need to run our Unity environment. VirtualGL still requires an X window server to be running, so we "fake" one using =xvfb= (the X virtual frame buffer), which creates a X window server inside the docker container that VirtualGL can latch on to. The full code exists inside [[src/entrypoint.sh][the src/entrypoint.sh script]] that launches when the Docker container is created, but the relevant snippet is here:
+#+begin_src bash
+export VGL_DISPLAY=$DISPLAY
+xvfb-run -a --server-num=$((99 + $RANDOM % 10000)) \
+     --server-args='-screen 0 640x480x24 +extension GLX +render -noreset' vglrun $@
+#+end_src
+This script does a number of things all at once:
+1. It sets =VGL_DISPLAY= to =$DISPLAY=, which is required to ensure that the "display" that VirtualGL is writing to is the same as the display the X window manager is writing to. Even without a physical display, this is important for GPU access.
+2. It launches a local X window server using =xvfb-run=. The =--server-num= is set to a random number so that there is no conflict during container creation; even though there could be a conflict, =xvfb= will find another number if one is already running. This is helpful to avoid a race condition, that should no longer happen (...much), deconflicted due to =$RANDOM=. The arguments on the right tell =xvfb= to create a screen of size 640x480 and with =GLX=: OpenGL hardware acceleration.
+3. Finally, =vglrun $@= runs the command input to the script =$@= within =VirtualGL= (and to inherit the X window server provided by =xvfb-run=.
+Alltogether, this allows us to run any process inside the Docker container with hardware-acceleration and an X window server.
+
+We provide the =unitybridge= package that launches our Unity environment, which is provided as a pre-built binary along with this repository. Unfortunately, at this time the Unity environment itself is not open source, but this process should work with any Unity application. To confirm that this example
