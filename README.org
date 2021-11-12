@@ -240,6 +240,8 @@ Now you can run this code using one of these configurations:
 
 Running one of these should write an image =demo_unity_env.png= into the =data= folder. With =USE_GPU=true=, the Unity3D environment runs with hardware acceleration (as long as Nvidia Docker is configured and runs with your local GPU), allowing us to generate the image relatively quickly. *Note:* There may be a number of warnings beginning with =ALSA= upon running this command. These are complaints that a sound card does not exist and can be ignored for our purposes.
 
+The Unity environment can also be run on the CPU (the configuration above without =USE_GPU=true=) though is considerably slower. However, this feature can be useful for running simple unit tests, and indeed a test confirming that we can communicate with the Unity simulation environment is included in our unit tests and is run as part of our automated continuous integration setup managed via GitHub Actions.
+
 ** How does hardware acceleration (GPU) work?
 
 The Unity3D environment is running inside a Docker container with hardware support. There are a few pieces required to make this setup work correctly. The first is the container itself, which must have the ability to support OpenGL. For this, our Dockerfile starts with the =cudagl= container provided by Nvidia:
@@ -266,4 +268,4 @@ This script does a number of things all at once:
 3. Finally, =vglrun $@= runs the command input to the script =$@= within =VirtualGL= (and to inherit the X window server provided by =xvfb-run=.
 Alltogether, this allows us to run any process inside the Docker container with hardware-acceleration and an X window server.
 
-We provide the =unitybridge= package that launches our Unity environment, which is provided as a pre-built binary along with this repository. Unfortunately, at this time the Unity environment itself is not open source, but this process should work with any Unity application. To confirm that this example
+We provide the =unitybridge= package that launches our Unity environment, which is provided as a pre-built binary along with this repository. Unfortunately, at this time the Unity environment itself is not open source, but this process should work with any Unity application.
