@@ -137,11 +137,7 @@ class UnityBridge(object):
         else:
             unity_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             unity_socket.bind((self.tcp_ip, self.listen_port))
-            print(unity_socket)
-            # print("NOW!")
-            # import time
-            # time.sleep(10)
-            pass
+            print(f"Unity Socket: {unity_socket}")
 
         self.unity_listener = TCPUnityParser(unity_socket)
 

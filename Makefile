@@ -149,9 +149,11 @@ demo-plotting-visualize:
 	@$(DOCKER_PYTHON) -m scripts.plotting_demo \
 		--xpassthrough $(XPASSTHROUGH)
 
+# A target that runs the Unity3D enviornment and generates an image
 .PHONY: demo-unity-env
-demo-unity-env: xhost-activate
+demo-unity-env:
 	@echo "Demo: Interfacing with Unity"
+	@$(call xhost-activate)
 	@docker run --init --net=host \
 		$(DOCKER_ARGS) $(DOCKER_CORE_ARGS) \
 		${IMAGE_NAME}:${VERSION} \
